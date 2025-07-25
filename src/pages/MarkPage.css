@@ -1,0 +1,339 @@
+/* Mark页面样式 */
+.mark-page {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  min-height: 100vh;
+}
+
+/* 页面头部 */
+.mark-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.mark-title-section {
+  flex: 1;
+}
+
+.mark-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0 0 0.5rem 0;
+}
+
+.mark-icon {
+  font-size: 2rem;
+  color: #ef4444;
+}
+
+.mark-subtitle {
+  color: #6b7280;
+  font-size: 1rem;
+  margin: 0;
+}
+
+.mark-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.clear-all-button {
+  padding: 0.5rem 1rem;
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.clear-all-button:hover {
+  background: #dc2626;
+}
+
+/* 搜索栏 */
+.mark-search {
+  margin-bottom: 1.5rem;
+}
+
+.search-input-wrapper {
+  position: relative;
+  max-width: 400px;
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.75rem 1rem 0.75rem 2.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  background: white;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.search-icon {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9ca3af;
+  pointer-events: none;
+}
+
+/* 统计信息 */
+.mark-stats {
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: #f9fafb;
+  border-radius: 0.75rem;
+  border: 1px solid #e5e7eb;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.stat-number {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 0.25rem;
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+/* 内容区域 */
+.mark-content {
+  min-height: 400px;
+}
+
+/* 空状态 */
+.empty-bookmarks {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 4rem 2rem;
+  background: #f9fafb;
+  border-radius: 1rem;
+  border: 2px dashed #d1d5db;
+}
+
+.empty-icon {
+  font-size: 4rem;
+  color: #d1d5db;
+  margin-bottom: 1rem;
+}
+
+.empty-bookmarks h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 0.5rem 0;
+}
+
+.empty-bookmarks p {
+  color: #6b7280;
+  margin: 0 0 1.5rem 0;
+  max-width: 400px;
+}
+
+.browse-jobs-button {
+  padding: 0.75rem 1.5rem;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.browse-jobs-button:hover {
+  background: #2563eb;
+}
+
+/* 搜索无结果 */
+.no-search-results {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 3rem 2rem;
+}
+
+.no-search-results h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 0.5rem 0;
+}
+
+.no-search-results p {
+  color: #6b7280;
+  margin: 0 0 1rem 0;
+}
+
+.clear-search-button {
+  padding: 0.5rem 1rem;
+  background: #6b7280;
+  color: white;
+  border: none;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.clear-search-button:hover {
+  background: #4b5563;
+}
+
+/* 收藏工作列表 */
+.bookmarked-jobs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.bookmarked-job-item {
+  position: relative;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  transition: box-shadow 0.2s, border-color 0.2s;
+}
+
+.bookmarked-job-item:hover {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  border-color: #d1d5db;
+}
+
+.bookmark-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: #f9fafb;
+  border-top: 1px solid #e5e7eb;
+}
+
+.bookmark-date {
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.remove-bookmark-button {
+  padding: 0.25rem;
+  background: none;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  border-radius: 0.25rem;
+  transition: color 0.2s, background-color 0.2s;
+}
+
+.remove-bookmark-button:hover {
+  color: #ef4444;
+  background: #fef2f2;
+}
+
+/* 加载状态 */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  text-align: center;
+}
+
+.loading-spinner {
+  width: 2rem;
+  height: 2rem;
+  border: 2px solid #e5e7eb;
+  border-top: 2px solid #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-container p {
+  color: #6b7280;
+  margin: 0;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .mark-page {
+    padding: 1rem;
+  }
+
+  .mark-header {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: stretch;
+  }
+
+  .mark-title {
+    font-size: 1.5rem;
+  }
+
+  .mark-stats {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .stat-item {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .search-input-wrapper {
+    max-width: none;
+  }
+
+  .empty-bookmarks {
+    padding: 2rem 1rem;
+  }
+
+  .empty-icon {
+    font-size: 3rem;
+  }
+}

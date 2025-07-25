@@ -1,0 +1,31 @@
+.layout {
+  width: 100%;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.content-container {
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+  padding: var(--spacing-4);
+}
+
+@media (max-width: 768px) {
+  .content-container {
+    padding: var(--spacing-3);
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .content-container {
+    padding: var(--spacing-4);
+  }
+}
+
+@media (min-width: 1025px) {
+  .content-container {
+    padding: var(--spacing-6);
+  }
+}
