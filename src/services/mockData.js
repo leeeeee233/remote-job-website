@@ -13,6 +13,8 @@ export const mockJobs = [
     applicants: 12,
     description: 'Join our distributed team to build beautiful, intuitive interfaces for millions of users worldwide. Work with React, TypeScript, and modern web technologies.',
     skills: ['React', 'TypeScript', 'JavaScript', 'CSS', 'Node.js'],
+    source: 'Mock Data',
+    sourceUrl: 'https://buffer.com/careers',
     minimumQualifications: [
       'Bachelor\'s degree in Computer Science, related field, or equivalent practical experience',
       '5+ years of experience in frontend development',
@@ -74,7 +76,9 @@ export const mockJobs = [
     views: 289,
     applicants: 19,
     description: 'Build and maintain the automation platform that connects 5000+ apps. Work with Python, JavaScript, and cloud technologies.',
-    skills: ['Python', 'JavaScript', 'AWS', 'Docker', 'PostgreSQL']
+    skills: ['Python', 'JavaScript', 'AWS', 'Docker', 'PostgreSQL'],
+    source: 'Mock Data',
+    sourceUrl: 'https://zapier.com/jobs'
   },
   {
     id: 4,
@@ -89,7 +93,9 @@ export const mockJobs = [
     views: 567,
     applicants: 34,
     description: 'Help scale WordPress.com and other Automattic products. Work with Kubernetes, Docker, and cloud infrastructure.',
-    skills: ['Kubernetes', 'Docker', 'AWS', 'Linux', 'Monitoring']
+    skills: ['Kubernetes', 'Docker', 'AWS', 'Linux', 'Monitoring'],
+    source: 'Mock Data',
+    sourceUrl: 'https://automattic.com/work-with-us'
   },
   {
     id: 5,
@@ -104,7 +110,9 @@ export const mockJobs = [
     views: 234,
     applicants: 41,
     description: 'Create compelling content that helps creators grow their audience. Work with a fully remote team passionate about creator economy.',
-    skills: ['Content Strategy', 'SEO', 'Email Marketing', 'Analytics']
+    skills: ['Content Strategy', 'SEO', 'Email Marketing', 'Analytics'],
+    source: 'Mock Data',
+    sourceUrl: 'https://convertkit.com/careers'
   },
   {
     id: 6,
@@ -119,7 +127,9 @@ export const mockJobs = [
     views: 445,
     applicants: 22,
     description: 'Work on the backend systems that power Basecamp and HEY. Ruby on Rails, PostgreSQL, and Redis in a calm, sustainable environment.',
-    skills: ['Ruby on Rails', 'PostgreSQL', 'Redis', 'API Design']
+    skills: ['Ruby on Rails', 'PostgreSQL', 'Redis', 'API Design'],
+    source: 'Mock Data',
+    sourceUrl: 'https://basecamp.com/about/jobs'
   },
   {
     id: 7,
@@ -134,7 +144,9 @@ export const mockJobs = [
     views: 178,
     applicants: 15,
     description: 'Conduct user research for Todoist and Twist. Help millions of users be more productive through evidence-based design decisions.',
-    skills: ['User Research', 'Data Analysis', 'Usability Testing', 'Survey Design']
+    skills: ['User Research', 'Data Analysis', 'Usability Testing', 'Survey Design'],
+    source: 'Mock Data',
+    sourceUrl: 'https://doist.com/careers'
   },
   {
     id: 8,
@@ -149,7 +161,9 @@ export const mockJobs = [
     views: 312,
     applicants: 38,
     description: 'Help our customers succeed with Help Scout. Build relationships, provide strategic guidance, and ensure customer satisfaction.',
-    skills: ['Customer Success', 'SaaS', 'Communication', 'Data Analysis']
+    skills: ['Customer Success', 'SaaS', 'Communication', 'Data Analysis'],
+    source: 'Mock Data',
+    sourceUrl: 'https://www.helpscout.com/company/careers'
   },
   {
     id: 9,
@@ -164,7 +178,9 @@ export const mockJobs = [
     views: 267,
     applicants: 16,
     description: 'Build and maintain mobile apps for time tracking and project management. Work with React Native and native iOS/Android development.',
-    skills: ['React Native', 'iOS', 'Android', 'JavaScript', 'Mobile UI']
+    skills: ['React Native', 'iOS', 'Android', 'JavaScript', 'Mobile UI'],
+    source: 'Mock Data',
+    sourceUrl: 'https://toggl.com/jobs'
   },
   {
     id: 10,
@@ -179,7 +195,9 @@ export const mockJobs = [
     views: 389,
     applicants: 25,
     description: 'Analyze user behavior and content performance on the Ghost publishing platform. Work with large datasets and machine learning.',
-    skills: ['Python', 'SQL', 'Machine Learning', 'Statistics', 'Data Visualization']
+    skills: ['Python', 'SQL', 'Machine Learning', 'Statistics', 'Data Visualization'],
+    source: 'Mock Data',
+    sourceUrl: 'https://ghost.org/careers'
   },
   {
     id: 11,
@@ -194,7 +212,9 @@ export const mockJobs = [
     views: 156,
     applicants: 29,
     description: 'Create clear, comprehensive documentation for Notion\'s API and developer tools. Help developers build amazing integrations.',
-    skills: ['Technical Writing', 'API Documentation', 'Developer Tools', 'Markdown']
+    skills: ['Technical Writing', 'API Documentation', 'Developer Tools', 'Markdown'],
+    source: 'Mock Data',
+    sourceUrl: 'https://www.notion.so/careers'
   },
   {
     id: 12,
@@ -209,7 +229,9 @@ export const mockJobs = [
     views: 203,
     applicants: 52,
     description: 'Generate and qualify leads for Airtable\'s enterprise sales team. Work with a modern sales stack and collaborative team.',
-    skills: ['Sales', 'Lead Generation', 'CRM', 'Communication', 'Prospecting']
+    skills: ['Sales', 'Lead Generation', 'CRM', 'Communication', 'Prospecting'],
+    source: 'Mock Data',
+    sourceUrl: 'https://airtable.com/careers'
   }
 ];
 

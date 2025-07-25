@@ -4,6 +4,8 @@ import JobCard from '../components/JobCard';
 import JobDetailsDrawer from '../components/JobDetailsDrawer';
 import { mockJobs } from '../services/mockData';
 import jobService from '../services/jobService';
+import fallbackJobService from '../services/fallbackJobService';
+import realTimeJobService from '../services/RealTimeJobService';
 import './JobFeed.css';
 
 const JobFeed = () => {
@@ -20,6 +22,9 @@ const JobFeed = () => {
   const [activeFilters, setActiveFilters] = useState([]);
   const [dataSources, setDataSources] = useState([]);
   const [dynamicCategories, setDynamicCategories] = useState([]);
+  const [lastUpdate, setLastUpdate] = useState(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [realTimeStats, setRealTimeStats] = useState(null);
   const observer = useRef();
   const lastJobElementRef = useCallback(node => {
     if (loading || loadingMore) return;
@@ -241,69 +246,75 @@ const JobFeed = () => {
     return jobs; // 返回所有工作
   };
 
+  // 实时数据更新监听器
   useEffect(() => {
-    // 获取真实的远程工作数据
-    const fetchJobs = async () => {
-      setLoading(true);
-      setJobs([]);
-      setFilteredJobs([]);
-      setPage(0);
-      setHasMore(true);
+    console.log('🚀 初始化实时工作数据服务');
+    
+    // 启动实时数据服务
+    realTimeJobService.startRealTimeUpdates();
+    
+    // 添加数据更新监听器
+    const unsubscribe = realTimeJobService.addUpdateListener((data) => {
+      console.log('📡 收到实时数据更新:', data);
       
+      // 更新工作数据
+      setJobs(data.jobs);
+      setDataSources(data.sources);
+      setLastUpdate(data.lastUpdate);
+      setRealTimeStats(data.stats);
+      
+      // 生成动态分类
+      const categories = generateDynamicCategories(data.jobs);
+      setDynamicCategories(categories);
+      
+      // 重新应用当前的搜索和筛选
+      applyFiltersToJobs(activeFilters, data.jobs, searchTerm);
+    });
+    
+    // 获取初始数据
+    const initializeData = async () => {
+      setLoading(true);
       try {
-        // 使用更通用的搜索词来获取更多结果
-        const designSearchTerms = searchTerm || '';
-        
-        // 尝试从真实API获取数据
-        const result = await jobService.searchRemoteJobs(designSearchTerms, {
-          ...activeFilters,
-          category: 'design' // 如果API支持分类，优先获取设计类工作
-        });
-        
-        // 先查看所有返回的工作，然后再过滤
-        console.log('All jobs returned from API:', result.jobs.length);
-        console.log('Sample jobs:', result.jobs.slice(0, 5).map(job => ({
-          title: job.title,
-          company: job.company,
-          description: job.description ? job.description.substring(0, 100) + '...' : 'No description',
-          skills: job.skills
-        })));
-        
-        // 处理所有工作数据
-        const allJobs = filterJobs(result.jobs);
-        
-        console.log(`处理了 ${allJobs.length} 个工作`);
-        setJobs(allJobs);
-        setFilteredJobs(allJobs);
-        
-        // 生成动态分类
-        const categories = generateDynamicCategories(allJobs);
-        setDynamicCategories(categories);
-        setDataSources(result.sources || []);
-        
-        // 如果返回的工作数量小于预期，可能没有更多数据了
-        if (result.jobs.length < 20) {
-          setHasMore(false);
+        const currentData = realTimeJobService.getCurrentJobs();
+        if (currentData.jobs.length > 0) {
+          console.log('✅ 使用现有数据:', currentData.jobs.length, '个工作');
+          setJobs(currentData.jobs);
+          setDataSources(currentData.sources);
+          setLastUpdate(currentData.lastUpdate);
+          setRealTimeStats(currentData.stats);
+          
+          const categories = generateDynamicCategories(currentData.jobs);
+          setDynamicCategories(categories);
+          
+          applyFiltersToJobs(activeFilters, currentData.jobs, searchTerm);
+        } else {
+          console.log('🔄 触发首次数据更新');
+          await realTimeJobService.forceUpdate();
         }
       } catch (error) {
-        console.error('Failed to fetch jobs from API, using mock data:', error);
-        // 如果API失败，使用模拟数据作为后备
+        console.error('❌ 初始化数据失败:', error);
+        // 使用模拟数据作为备用
         const filteredMockJobs = filterJobs(mockJobs);
         setJobs(filteredMockJobs);
         setFilteredJobs(filteredMockJobs);
+        setDataSources(['Mock Data']);
         
-        // 生成动态分类
         const categories = generateDynamicCategories(filteredMockJobs);
         setDynamicCategories(categories);
-        setDataSources(['Mock Data']);
-        setHasMore(false);
       } finally {
         setLoading(false);
       }
     };
-
-    fetchJobs();
-  }, [searchTerm]); // 移除activeFilters依赖，筛选只在本地进行
+    
+    initializeData();
+    
+    // 清理函数
+    return () => {
+      console.log('🛑 清理实时数据服务');
+      unsubscribe();
+      realTimeJobService.stopRealTimeUpdates();
+    };
+  }, []); // 只在组件挂载时运行一次
 
   const handleSearch = (term) => {
     // 更新搜索词状态
@@ -330,6 +341,46 @@ const JobFeed = () => {
     
     // 立即应用筛选到当前已加载的工作
     applyFiltersToJobs(filterIds);
+  };
+
+  // 手动刷新数据
+  const handleRefresh = async () => {
+    if (isRefreshing) return;
+    
+    console.log('🔄 手动刷新工作数据');
+    setIsRefreshing(true);
+    
+    try {
+      const result = await realTimeJobService.forceUpdate();
+      if (result.success) {
+        console.log('✅ 手动刷新成功');
+        // 数据会通过监听器自动更新UI
+      } else {
+        console.error('❌ 手动刷新失败:', result.error);
+      }
+    } catch (error) {
+      console.error('❌ 手动刷新异常:', error);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  // 格式化最后更新时间
+  const formatLastUpdate = (date) => {
+    if (!date) return '未知';
+    
+    const now = new Date();
+    const diff = now - new Date(date);
+    const minutes = Math.floor(diff / (1000 * 60));
+    
+    if (minutes < 1) return '刚刚';
+    if (minutes < 60) return `${minutes}分钟前`;
+    
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}小时前`;
+    
+    const days = Math.floor(hours / 24);
+    return `${days}天前`;
   };
 
   // 统一的工作分类匹配函数 - 与generateDynamicCategories使用相同的逻辑
@@ -486,20 +537,20 @@ const JobFeed = () => {
   };
 
   // 应用筛选器到工作列表 - 使用统一的匹配逻辑和相关性排序
-  const applyFiltersToJobs = (filterIds) => {
-    let results = [...jobs];
+  const applyFiltersToJobs = (filterIds, jobsData = jobs, searchTermData = searchTerm) => {
+    let results = [...jobsData];
     
     // 首先按搜索词过滤并计算相关性
-    if (searchTerm) {
+    if (searchTermData) {
       results = results
         .map(job => ({
           ...job,
-          relevanceScore: calculateSearchRelevance(job, searchTerm)
+          relevanceScore: calculateSearchRelevance(job, searchTermData)
         }))
         .filter(job => job.relevanceScore > 0) // 只保留有相关性的工作
         .sort((a, b) => b.relevanceScore - a.relevanceScore); // 按相关性排序
       
-      console.log(`搜索 "${searchTerm}" 找到 ${results.length} 个相关工作`);
+      console.log(`搜索 "${searchTermData}" 找到 ${results.length} 个相关工作`);
       console.log('前5个最相关的工作:', results.slice(0, 5).map(job => ({
         title: job.title,
         company: job.company,
@@ -654,11 +705,38 @@ const JobFeed = () => {
           <>
             {filteredJobs.length > 0 ? (
               <>
-                <div className="results-count">
-                  找到 <span className="count-highlight">{filteredJobs.length}</span> 个工作机会
-                </div>
-                <div className="data-sources">
-                  数据来源: {dataSources.join(', ')}
+                <div className="results-header">
+                  <div className="results-count">
+                    找到 <span className="count-highlight">{filteredJobs.length}</span> 个工作机会
+                  </div>
+                  <div className="real-time-status">
+                    <div className="data-sources">
+                      数据来源: {dataSources.join(', ')}
+                    </div>
+                    <div className="update-info">
+                      <span className="last-update">
+                        最后更新: {formatLastUpdate(lastUpdate)}
+                      </span>
+                      <button 
+                        className={`refresh-btn ${isRefreshing ? 'refreshing' : ''}`}
+                        onClick={handleRefresh}
+                        disabled={isRefreshing}
+                        title="刷新工作数据"
+                      >
+                        {isRefreshing ? '🔄' : '↻'}
+                      </button>
+                    </div>
+                    {realTimeStats && (
+                      <div className="stats-info">
+                        <span className="new-jobs">
+                          {realTimeStats.newJobs > 0 && `🆕 ${realTimeStats.newJobs} 个新工作`}
+                        </span>
+                        <span className="total-updates">
+                          已更新 {realTimeStats.successfulUpdates} 次
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div className="job-list">
                   {filteredJobs.map((job, index) => {

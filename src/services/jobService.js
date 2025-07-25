@@ -158,27 +158,50 @@ const searchRemoteJobsFallback = async (searchTerm = '', filters = {}) => {
   try {
     console.log('使用备选搜索方法...');
     
-    // 并行调用多个API
-    const [weWorkJobs, linkedInJobs, remoteOKJobs] = await Promise.allSettled([
-      fetchWeWorkRemotelyJobs(searchTerm, filters.category),
-      fetchLinkedInJobs(searchTerm, filters.location || 'remote'),
-      fetchRemoteOKJobs()
-    ]);
+    // 首先尝试从mockData获取数据作为基础
+    const { mockJobs } = await import('./mockData');
+    console.log('加载了', mockJobs.length, '个模拟工作作为基础数据');
     
-    // 合并结果
+    // 并行调用多个API，但设置较短的超时时间
+    const apiPromises = [
+      Promise.race([
+        fetchWeWorkRemotelyJobs(searchTerm, filters.category),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('WeWorkRemotely API timeout')), 8000))
+      ]),
+      Promise.race([
+        fetchLinkedInJobs(searchTerm, filters.location || 'remote'),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('LinkedIn API timeout')), 8000))
+      ]),
+      Promise.race([
+        fetchRemoteOKJobs(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('RemoteOK API timeout')), 8000))
+      ])
+    ];
+    
+    const [weWorkJobs, linkedInJobs, remoteOKJobs] = await Promise.allSettled(apiPromises);
+    
+    // 合并结果，包括模拟数据
     const allJobs = [
+      ...mockJobs, // 始终包含模拟数据作为基础
       ...(weWorkJobs.status === 'fulfilled' ? weWorkJobs.value : []),
       ...(linkedInJobs.status === 'fulfilled' ? linkedInJobs.value : []),
       ...(remoteOKJobs.status === 'fulfilled' ? remoteOKJobs.value : [])
     ];
     
-    // 如果所有API都失败，返回空结果
+    console.log('API调用结果:');
+    console.log('- WeWorkRemotely:', weWorkJobs.status === 'fulfilled' ? `${weWorkJobs.value.length} jobs` : `失败: ${weWorkJobs.reason?.message}`);
+    console.log('- LinkedIn:', linkedInJobs.status === 'fulfilled' ? `${linkedInJobs.value.length} jobs` : `失败: ${linkedInJobs.reason?.message}`);
+    console.log('- RemoteOK:', remoteOKJobs.status === 'fulfilled' ? `${remoteOKJobs.value.length} jobs` : `失败: ${remoteOKJobs.reason?.message}`);
+    console.log('- 模拟数据:', mockJobs.length, 'jobs');
+    console.log('- 总计:', allJobs.length, 'jobs');
+    
+    // 即使所有API都失败，我们仍然有模拟数据
     if (allJobs.length === 0) {
-      console.error('Failed to fetch jobs from any source');
+      console.error('No jobs available, including mock data');
       return {
         jobs: [],
         total: 0,
-        sources: []
+        sources: ['No Data Available']
       };
     }
     
@@ -215,12 +238,17 @@ const searchRemoteJobsFallback = async (searchTerm = '', filters = {}) => {
     // 排序
     const sortedJobs = sortJobs(filteredJobs, filters.sort || 'date');
     
-    // 获取数据来源
-    const sources = [...new Set(sortedJobs.map(job => job.source))];
+    // 获取数据来源，确保模拟数据也有正确的source标记
+    const jobsWithSource = sortedJobs.map(job => ({
+      ...job,
+      source: job.source || 'Mock Data' // 确保每个工作都有source标记
+    }));
+    
+    const sources = [...new Set(jobsWithSource.map(job => job.source))];
     
     const result = {
-      jobs: sortedJobs,
-      total: sortedJobs.length,
+      jobs: jobsWithSource,
+      total: jobsWithSource.length,
       sources,
       deduplicationStats: globalDeduplicationService.getStats()
     };
