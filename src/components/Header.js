@@ -64,6 +64,10 @@ const Header = ({ onSearch, onFilter, dynamicCategories = [] }) => {
   return (
     <header className="header">
       <div className="header-content">
+        <div className="brand-logo">
+          <h1 className="brand-name">Huntjob</h1>
+          <span className="brand-tagline">远程工作机会平台</span>
+        </div>
         <div className={`search-container ${isSearchFocused ? 'focused' : ''}`}>
           <div className="search-input-wrapper">
             <input
