@@ -1,0 +1,32 @@
+.placeholder-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 70vh;
+  text-align: center;
+  padding: var(--spacing-6);
+  color: var(--text-secondary);
+  background-color: var(--card-background);
+  border-radius: var(--border-radius-lg);
+  margin: var(--spacing-6);
+  box-shadow: var(--shadow-sm);
+}
+
+.placeholder-page h2 {
+  font-size: var(--font-size-2xl);
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-4);
+}
+
+.placeholder-page p {
+  font-size: var(--font-size-base);
+  max-width: 600px;
+  line-height: 1.6;
+}
+
+.placeholder-icon {
+  font-size: 48px;
+  margin-bottom: var(--spacing-6);
+  color: var(--primary-color);
+}
