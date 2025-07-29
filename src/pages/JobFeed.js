@@ -706,36 +706,34 @@ const JobFeed = () => {
             {filteredJobs.length > 0 ? (
               <>
                 <div className="results-header">
-                  <div className="results-count">
-                    找到 <span className="count-highlight">{filteredJobs.length}</span> 个工作机会
-                  </div>
-                  <div className="real-time-status">
-                    <div className="data-sources">
-                      数据来源: {dataSources.join(', ')}
-                    </div>
-                    <div className="update-info">
-                      <span className="last-update">
-                        最后更新: {formatLastUpdate(lastUpdate)}
+                  <div className="results-main-info">
+                    <span className="results-count">
+                      找到 <span className="count-highlight">{filteredJobs.length}</span> 个工作机会
+                    </span>
+                    <span className="last-update-inline">
+                      最后更新: {formatLastUpdate(lastUpdate)}
+                    </span>
+                    {realTimeStats && realTimeStats.newJobs > 0 && (
+                      <span className="new-jobs-inline">
+                        🆕 {realTimeStats.newJobs} 个新工作
                       </span>
-                      <button 
-                        className={`refresh-btn ${isRefreshing ? 'refreshing' : ''}`}
-                        onClick={handleRefresh}
-                        disabled={isRefreshing}
-                        title="刷新工作数据"
-                      >
-                        {isRefreshing ? '🔄' : '↻'}
-                      </button>
-                    </div>
-                    {realTimeStats && (
-                      <div className="stats-info">
-                        <span className="new-jobs">
-                          {realTimeStats.newJobs > 0 && `🆕 ${realTimeStats.newJobs} 个新工作`}
-                        </span>
-                        <span className="total-updates">
-                          已更新 {realTimeStats.successfulUpdates} 次
-                        </span>
-                      </div>
                     )}
+                    {realTimeStats && (
+                      <span className="total-updates-inline">
+                        已更新 {realTimeStats.successfulUpdates} 次
+                      </span>
+                    )}
+                    <button 
+                      className={`refresh-btn-inline ${isRefreshing ? 'refreshing' : ''}`}
+                      onClick={handleRefresh}
+                      disabled={isRefreshing}
+                      title="刷新工作数据"
+                    >
+                      {isRefreshing ? '🔄' : '↻'}
+                    </button>
+                  </div>
+                  <div className="data-sources">
+                    数据来源: {dataSources.join(', ')}
                   </div>
                 </div>
                 <div className="job-list">

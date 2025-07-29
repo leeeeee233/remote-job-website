@@ -173,10 +173,18 @@
   border-left: 4px solid var(--primary-color);
 }
 
+/* 主要信息行 - 内联布局 */
+.results-main-info {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  margin-bottom: var(--spacing-2);
+  flex-wrap: wrap;
+}
+
 .results-count {
   font-size: var(--font-size-lg);
   color: var(--text-primary);
-  margin-bottom: var(--spacing-2);
   font-weight: var(--font-weight-medium);
 }
 
@@ -185,58 +193,53 @@
   font-weight: var(--font-weight-semibold);
 }
 
-/* 实时状态样式 */
-.real-time-status {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-2);
-}
-
-.data-sources {
+/* 内联状态信息样式 */
+.last-update-inline,
+.new-jobs-inline,
+.total-updates-inline {
   font-size: var(--font-size-sm);
   color: var(--text-secondary);
-  font-style: italic;
+  white-space: nowrap;
 }
 
-.update-info {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-3);
-  font-size: var(--font-size-sm);
-  color: var(--text-secondary);
+.new-jobs-inline {
+  color: #28a745;
+  font-weight: var(--font-weight-medium);
 }
 
-.last-update {
-  color: var(--text-secondary);
+.total-updates-inline {
+  color: var(--text-muted);
 }
 
-.refresh-btn {
+/* 内联刷新按钮 */
+.refresh-btn-inline {
   background: var(--primary-color);
   color: white;
   border: none;
   border-radius: 4px;
   padding: 0.25rem 0.5rem;
   cursor: pointer;
-  font-size: 1rem;
+  font-size: 0.9rem;
   transition: all 0.2s ease;
-  min-width: 28px;
-  height: 28px;
+  min-width: 24px;
+  height: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
+  margin-left: auto;
 }
 
-.refresh-btn:hover:not(:disabled) {
+.refresh-btn-inline:hover:not(:disabled) {
   background: var(--primary-hover);
   transform: scale(1.05);
 }
 
-.refresh-btn:disabled {
+.refresh-btn-inline:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
 
-.refresh-btn.refreshing {
+.refresh-btn-inline.refreshing {
   animation: spin-refresh 1s linear infinite;
 }
 
@@ -245,21 +248,11 @@
   to { transform: rotate(360deg); }
 }
 
-.stats-info {
-  display: flex;
-  gap: var(--spacing-4);
-  font-size: var(--font-size-xs);
+/* 数据来源样式 */
+.data-sources {
+  font-size: var(--font-size-sm);
   color: var(--text-secondary);
-  margin-top: var(--spacing-1);
-}
-
-.new-jobs {
-  color: #28a745;
-  font-weight: var(--font-weight-medium);
-}
-
-.total-updates {
-  color: var(--text-muted);
+  font-style: italic;
 }
 
 /* 响应式设计 */
@@ -268,15 +261,21 @@
     padding: var(--spacing-3);
   }
   
-  .update-info {
+  .results-main-info {
     flex-direction: column;
     align-items: flex-start;
     gap: var(--spacing-2);
   }
   
-  .stats-info {
-    flex-direction: column;
-    gap: var(--spacing-1);
+  .refresh-btn-inline {
+    margin-left: 0;
+    align-self: flex-end;
+  }
+  
+  .last-update-inline,
+  .new-jobs-inline,
+  .total-updates-inline {
+    font-size: var(--font-size-xs);
   }
 }
 
