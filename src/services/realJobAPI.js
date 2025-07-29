@@ -6,20 +6,56 @@ import logoService from './logoService';
 // RemoteOK API (免费，无需API密钥)
 export const fetchRemoteOKJobs = async () => {
   try {
-    // 使用更可靠的CORS代理
-    const corsProxy = 'https://api.allorigins.win/raw?url=';
-    const remoteOkUrl = 'https://remoteok.io/api';
-    const response = await fetch(`${corsProxy}${encodeURIComponent(remoteOkUrl)}`, {
-      headers: {
-        'Origin': window.location.origin,
-      }
-    });
+    console.log('🔄 尝试获取RemoteOK工作数据...');
     
-    if (!response.ok) {
-      throw new Error(`Failed to fetch RemoteOK jobs: ${response.status}`);
+    // 尝试多个CORS代理，提高成功率
+    const corsProxies = [
+      'https://api.allorigins.win/raw?url=',
+      'https://cors-anywhere.herokuapp.com/',
+      'https://api.codetabs.com/v1/proxy?quest=',
+      'https://thingproxy.freeboard.io/fetch/'
+    ];
+    
+    const remoteOkUrl = 'https://remoteok.io/api';
+    let data = null;
+    let lastError = null;
+    
+    // 尝试不同的代理
+    for (const corsProxy of corsProxies) {
+      try {
+        console.log(`🔗 尝试使用代理: ${corsProxy}`);
+        
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000); // 8秒超时
+        
+        const response = await fetch(`${corsProxy}${encodeURIComponent(remoteOkUrl)}`, {
+          headers: {
+            'Origin': window.location.origin,
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+          },
+          signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        data = await response.json();
+        console.log('✅ 成功获取RemoteOK数据，工作数量:', data.length);
+        break; // 成功获取数据，跳出循环
+      } catch (error) {
+        console.warn(`❌ 代理 ${corsProxy} 失败:`, error.message);
+        lastError = error;
+        continue; // 尝试下一个代理
+      }
     }
     
-    const data = await response.json();
+    // 如果所有代理都失败，抛出最后一个错误
+    if (!data) {
+      throw lastError || new Error('所有CORS代理都失败了');
+    }
     
     // RemoteOK返回的第一个元素是统计信息，需要跳过
     const jobs = data.slice(1);
@@ -85,6 +121,8 @@ export const fetchGitHubJobs = async () => {
 // WeWorkRemotely API (通过RSS2JSON)
 export const fetchWeWorkRemotelyJobs = async (category = 'all') => {
   try {
+    console.log('🔄 尝试获取WeWorkRemotely工作数据...');
+    
     // 获取RSS feed URL
     const categoryPath = {
       'programming': 'remote-jobs/remote-programming-jobs',
@@ -98,20 +136,57 @@ export const fetchWeWorkRemotelyJobs = async (category = 'all') => {
     
     const rssUrl = `https://weworkremotely.com/${categoryPath}.rss`;
     
-    // 使用RSS2JSON服务转换WeWorkRemotely的RSS feed
-    // 使用免费版本，不需要API密钥
-    const rss2jsonUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`;
+    // 尝试多个RSS2JSON服务
+    const rss2jsonServices = [
+      `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`,
+      `https://api.allorigins.win/get?url=${encodeURIComponent(rssUrl)}`
+    ];
     
-    const response = await fetch(rss2jsonUrl);
+    let data = null;
+    let lastError = null;
     
-    if (!response.ok) {
-      throw new Error(`Failed to fetch WeWorkRemotely jobs: ${response.status}`);
+    for (const serviceUrl of rss2jsonServices) {
+      try {
+        console.log(`🔗 尝试RSS服务: ${serviceUrl.includes('rss2json') ? 'RSS2JSON' : 'AllOrigins'}`);
+        
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000);
+        
+        const response = await fetch(serviceUrl, {
+          signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const responseData = await response.json();
+        
+        // 处理不同服务的响应格式
+        if (serviceUrl.includes('rss2json')) {
+          if (responseData.status !== 'ok') {
+            throw new Error('Invalid response from RSS2JSON');
+          }
+          data = responseData;
+        } else {
+          // AllOrigins返回的是原始RSS内容，需要解析
+          // 这里简化处理，如果需要可以添加XML解析
+          throw new Error('AllOrigins RSS parsing not implemented');
+        }
+        
+        console.log('✅ 成功获取WeWorkRemotely数据，工作数量:', data.items?.length || 0);
+        break;
+      } catch (error) {
+        console.warn(`❌ RSS服务失败:`, error.message);
+        lastError = error;
+        continue;
+      }
     }
     
-    const data = await response.json();
-    
-    if (data.status !== 'ok') {
-      throw new Error('Invalid response from RSS2JSON');
+    if (!data) {
+      throw lastError || new Error('所有RSS服务都失败了');
     }
     
     return Promise.all(data.items.map(async (item, index) => {

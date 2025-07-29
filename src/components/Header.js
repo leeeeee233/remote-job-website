@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import './Header.css';
 
-const Header = ({ onSearch, onFilter, dynamicCategories = [] }) => {
+const Header = ({ onSearch, onFilter, dynamicCategories = [], isLoading = false }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFilters, setActiveFilters] = useState([]);
 
@@ -64,10 +64,6 @@ const Header = ({ onSearch, onFilter, dynamicCategories = [] }) => {
   return (
     <header className="header">
       <div className="header-content">
-        <div className="brand-logo">
-          <h1 className="brand-name">Huntjob</h1>
-          <span className="brand-tagline">远程工作机会平台</span>
-        </div>
         <div className={`search-container ${isSearchFocused ? 'focused' : ''}`}>
           <div className="search-input-wrapper">
             <input
@@ -87,23 +83,25 @@ const Header = ({ onSearch, onFilter, dynamicCategories = [] }) => {
             </button>
           </div>
           
-          <div className="filter-tags">
-            {filterOptions.map(filter => (
-              <button
-                key={filter.id}
-                className={`filter-tag ${activeFilters.includes(filter.id) ? 'active' : ''}`}
-                onClick={() => handleFilterClick(filter.id)}
-              >
-                {filter.label}
-              </button>
-            ))}
-            
-            {(activeFilters.length > 0 || searchTerm) && (
-              <button className="clear-filters" onClick={handleClearFilters}>
-                Clear filters
-              </button>
-            )}
-          </div>
+          {!isLoading && (
+            <div className="filter-tags">
+              {filterOptions.map(filter => (
+                <button
+                  key={filter.id}
+                  className={`filter-tag ${activeFilters.includes(filter.id) ? 'active' : ''}`}
+                  onClick={() => handleFilterClick(filter.id)}
+                >
+                  {filter.label}
+                </button>
+              ))}
+              
+              {(activeFilters.length > 0 || searchTerm) && (
+                <button className="clear-filters" onClick={handleClearFilters}>
+                  Clear filters
+                </button>
+              )}
+            </div>
+          )}
         </div>
         
 
