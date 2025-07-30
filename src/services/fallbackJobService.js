@@ -1,24 +1,24 @@
-// 备用工作服务 - 确保线上环境始终有数据显示
-import { mockJobs } from './mockData';
+// 备用工作服务 - 只使用真实数据源
+import { fetchRealRemoteJobs } from './realJobAPI';
 
-// 简化的工作搜索服务，优先使用模拟数据，确保稳定性
+// 简化的工作搜索服务，只使用真实数据
 export const searchJobsWithFallback = async (searchTerm = '', filters = {}) => {
-  console.log('🔄 开始搜索工作，搜索词:', searchTerm, '筛选器:', filters);
+  console.log('🔄 开始搜索真实工作数据，搜索词:', searchTerm, '筛选器:', filters);
   
   try {
-    // 首先使用模拟数据作为基础，确保始终有数据
-    let jobs = [...mockJobs];
-    console.log('✅ 加载了', jobs.length, '个模拟工作');
+    // 只从真实API获取数据
+    let jobs = [];
+    console.log('🔄 开始获取真实工作数据...');
     
-    // 尝试从真实API获取额外数据（但不依赖它们）
+    // 尝试从真实API获取数据
     try {
-      const additionalJobs = await fetchAdditionalJobsWithTimeout();
-      if (additionalJobs && additionalJobs.length > 0) {
-        jobs = [...jobs, ...additionalJobs];
-        console.log('✅ 额外获取了', additionalJobs.length, '个真实工作');
+      const realJobs = await fetchRealRemoteJobs(searchTerm, filters);
+      if (realJobs && realJobs.jobs && realJobs.jobs.length > 0) {
+        jobs = [...jobs, ...realJobs.jobs];
+        console.log('✅ 获取了', realJobs.jobs.length, '个真实工作');
       }
     } catch (apiError) {
-      console.warn('⚠️ API调用失败，使用模拟数据:', apiError.message);
+      console.warn('⚠️ 真实API调用失败:', apiError.message);
     }
     
     // 应用搜索和筛选
@@ -39,69 +39,20 @@ export const searchJobsWithFallback = async (searchTerm = '', filters = {}) => {
   } catch (error) {
     console.error('❌ 搜索服务完全失败:', error);
     
-    // 即使出现错误，也返回基本的模拟数据
-    const basicJobs = applySearchAndFilters(mockJobs, searchTerm, filters);
+    // 如果完全失败，返回空结果
     return {
-      jobs: basicJobs,
-      total: basicJobs.length,
-      sources: ['Mock Data'],
+      jobs: [],
+      total: 0,
+      sources: ['No Data Available'],
       hasMore: false,
       page: 0,
-      pageSize: basicJobs.length,
-      error: '部分功能可能受限，正在使用离线数据'
+      pageSize: 0,
+      error: '无法获取工作数据，请稍后重试'
     };
   }
 };
 
-// 带超时的API调用
-const fetchAdditionalJobsWithTimeout = async (timeoutMs = 5000) => {
-  return new Promise(async (resolve, reject) => {
-    // 设置超时
-    const timeout = setTimeout(() => {
-      reject(new Error('API调用超时'));
-    }, timeoutMs);
-    
-    try {
-      // 尝试调用真实API（这里可以替换为实际的API调用）
-      const jobs = await tryFetchRealJobs();
-      clearTimeout(timeout);
-      resolve(jobs);
-    } catch (error) {
-      clearTimeout(timeout);
-      reject(error);
-    }
-  });
-};
-
-// 尝试获取真实工作数据
-const tryFetchRealJobs = async () => {
-  // 这里可以尝试调用真实的API
-  // 为了演示，我们返回一些额外的模拟数据
-  const additionalJobs = [
-    {
-      id: 'real-1',
-      title: 'Senior React Developer',
-      company: 'TechCorp',
-      companyLogo: 'https://logo.clearbit.com/techcorp.com',
-      location: 'Remote - Global',
-      type: 'Full-time',
-      salary: 135,
-      team: 'Engineering',
-      postedDate: 'Today',
-      views: 89,
-      applicants: 7,
-      description: 'Join our team to build next-generation web applications using React and modern JavaScript.',
-      skills: ['React', 'JavaScript', 'TypeScript', 'GraphQL', 'AWS'],
-      source: 'Real API',
-      sourceUrl: 'https://techcorp.com/careers'
-    }
-  ];
-  
-  // 模拟网络延迟
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  
-  return additionalJobs;
-};
+// 移除不再使用的函数
 
 // 应用搜索和筛选逻辑
 const applySearchAndFilters = (jobs, searchTerm, filters) => {

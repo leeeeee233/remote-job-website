@@ -158,9 +158,8 @@ const searchRemoteJobsFallback = async (searchTerm = '', filters = {}) => {
   try {
     console.log('使用备选搜索方法...');
     
-    // 首先尝试从mockData获取数据作为基础
-    const { mockJobs } = await import('./mockData');
-    console.log('加载了', mockJobs.length, '个模拟工作作为基础数据');
+    // 不再使用mock数据作为基础
+    console.log('🔄 开始获取真实工作数据...');
     
     // 并行调用多个API，但设置较短的超时时间
     const apiPromises = [
@@ -180,24 +179,22 @@ const searchRemoteJobsFallback = async (searchTerm = '', filters = {}) => {
     
     const [weWorkJobs, linkedInJobs, remoteOKJobs] = await Promise.allSettled(apiPromises);
     
-    // 合并结果，包括模拟数据
+    // 只合并真实API的结果
     const allJobs = [
-      ...mockJobs, // 始终包含模拟数据作为基础
       ...(weWorkJobs.status === 'fulfilled' ? weWorkJobs.value : []),
       ...(linkedInJobs.status === 'fulfilled' ? linkedInJobs.value : []),
       ...(remoteOKJobs.status === 'fulfilled' ? remoteOKJobs.value : [])
     ];
     
-    console.log('API调用结果:');
+    console.log('真实API调用结果:');
     console.log('- WeWorkRemotely:', weWorkJobs.status === 'fulfilled' ? `${weWorkJobs.value.length} jobs` : `失败: ${weWorkJobs.reason?.message}`);
     console.log('- LinkedIn:', linkedInJobs.status === 'fulfilled' ? `${linkedInJobs.value.length} jobs` : `失败: ${linkedInJobs.reason?.message}`);
     console.log('- RemoteOK:', remoteOKJobs.status === 'fulfilled' ? `${remoteOKJobs.value.length} jobs` : `失败: ${remoteOKJobs.reason?.message}`);
-    console.log('- 模拟数据:', mockJobs.length, 'jobs');
     console.log('- 总计:', allJobs.length, 'jobs');
     
-    // 即使所有API都失败，我们仍然有模拟数据
+    // 如果所有真实API都失败，返回空结果
     if (allJobs.length === 0) {
-      console.error('No jobs available, including mock data');
+      console.warn('⚠️ 无法获取任何真实工作数据');
       return {
         jobs: [],
         total: 0,
@@ -238,10 +235,10 @@ const searchRemoteJobsFallback = async (searchTerm = '', filters = {}) => {
     // 排序
     const sortedJobs = sortJobs(filteredJobs, filters.sort || 'date');
     
-    // 获取数据来源，确保模拟数据也有正确的source标记
+    // 获取数据来源，确保每个工作都有正确的source标记
     const jobsWithSource = sortedJobs.map(job => ({
       ...job,
-      source: job.source || 'Mock Data' // 确保每个工作都有source标记
+      source: job.source || 'Unknown Source' // 确保每个工作都有source标记
     }));
     
     const sources = [...new Set(jobsWithSource.map(job => job.source))];
