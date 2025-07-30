@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Header from '../components/Header';
 import JobCard from '../components/JobCard';
 import JobDetailsDrawer from '../components/JobDetailsDrawer';
-import { mockJobs } from '../services/mockData';
+// 移除mock数据依赖
 import jobService from '../services/jobService';
 import fallbackJobService from '../services/fallbackJobService';
 import realTimeJobService from '../services/RealTimeJobService';
@@ -295,14 +295,11 @@ const JobFeed = () => {
       } catch (error) {
         console.error('❌ 初始化数据失败:', error);
         
-        // 使用模拟数据作为备用
-        const filteredMockJobs = filterJobs(mockJobs);
-        setJobs(filteredMockJobs);
-        setFilteredJobs(filteredMockJobs);
-        setDataSources(['Mock Data']);
-        
-        const categories = generateDynamicCategories(filteredMockJobs);
-        setDynamicCategories(categories);
+        // 不再使用mock数据，显示空状态
+        setJobs([]);
+        setFilteredJobs([]);
+        setDataSources(['No Data Available']);
+        setDynamicCategories([]);
       } finally {
         setLoading(false);
       }
