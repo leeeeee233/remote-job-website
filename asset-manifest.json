@@ -1,13 +1,13 @@
 {
   "files": {
-    "main.css": "/remote-job-website/static/css/main.7654d62c.css",
-    "main.js": "/remote-job-website/static/js/main.5b0fa8dd.js",
+    "main.css": "/remote-job-website/static/css/main.30c6beb8.css",
+    "main.js": "/remote-job-website/static/js/main.9285ba1d.js",
     "index.html": "/remote-job-website/index.html",
-    "main.7654d62c.css.map": "/remote-job-website/static/css/main.7654d62c.css.map",
-    "main.5b0fa8dd.js.map": "/remote-job-website/static/js/main.5b0fa8dd.js.map"
+    "main.30c6beb8.css.map": "/remote-job-website/static/css/main.30c6beb8.css.map",
+    "main.9285ba1d.js.map": "/remote-job-website/static/js/main.9285ba1d.js.map"
   },
   "entrypoints": [
-    "static/css/main.7654d62c.css",
-    "static/js/main.5b0fa8dd.js"
+    "static/css/main.30c6beb8.css",
+    "static/js/main.9285ba1d.js"
   ]
 }
