@@ -1,16 +1,21 @@
 .header {
   background-color: var(--card-background);
   width: 100%;
+  position: relative;
 }
 
 .header-content {
   width: 100%;
+  max-width: none;
   padding: var(--spacing-5) var(--spacing-6);
+  box-sizing: border-box;
 }
 
 .search-container {
   width: 100%;
+  max-width: none;
   margin-bottom: var(--spacing-2);
+  box-sizing: border-box;
 }
 
 .search-container.focused .search-input {
@@ -26,6 +31,7 @@
 
 .search-input {
   width: 100%;
+  max-width: none;
   padding: var(--spacing-3) var(--spacing-4);
   padding-right: var(--spacing-10);
   border: 1px solid var(--border-color);
@@ -33,6 +39,7 @@
   font-size: var(--font-size-base);
   color: var(--text-primary);
   transition: all var(--transition-fast);
+  box-sizing: border-box;
 }
 
 .search-input:focus {

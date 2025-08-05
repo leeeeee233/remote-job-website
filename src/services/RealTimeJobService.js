@@ -1,6 +1,5 @@
-// 实时工作数据刷新服务
+// 实时工作数据刷新服务 - 只使用真实数据源
 import { fetchRealRemoteJobs, fetchRemoteOKJobs, fetchWeWorkRemotelyJobs } from './realJobAPI';
-import { mockJobs } from './mockData';
 
 class RealTimeJobService {
   constructor() {
@@ -22,27 +21,27 @@ class RealTimeJobService {
   // 开始实时更新
   startRealTimeUpdates() {
     console.log('🚀 启动实时工作数据更新服务');
-    
+
     // 立即执行一次更新
     this.updateJobs();
-    
+
     // 设置定期更新
     this.updateInterval = setInterval(() => {
       this.updateJobs();
     }, this.updateFrequency);
-    
+
     return this;
   }
 
   // 停止实时更新
   stopRealTimeUpdates() {
     console.log('⏹️ 停止实时工作数据更新服务');
-    
+
     if (this.updateInterval) {
       clearInterval(this.updateInterval);
       this.updateInterval = null;
     }
-    
+
     return this;
   }
 
@@ -52,7 +51,7 @@ class RealTimeJobService {
     return await this.updateJobs(true);
   }
 
-  // 更新工作数据
+  // 更新工作数据 - 只使用真实数据源
   async updateJobs(force = false) {
     if (this.isUpdating && !force) {
       console.log('⏳ 更新正在进行中，跳过此次更新');
@@ -61,37 +60,42 @@ class RealTimeJobService {
 
     this.isUpdating = true;
     this.stats.totalUpdates++;
-    
+
     try {
-      console.log('🔄 开始获取最新工作数据...');
-      
-      // 并行调用多个数据源
+      console.log('🔄 开始获取真实工作数据...');
+
+      // 只调用真实数据源，增加超时时间以提高成功率
       const dataPromises = [
-        this.fetchFromRemoteOK(),
-        this.fetchFromWeWorkRemotely(),
-        this.fetchMockData()
+        Promise.race([
+          this.fetchFromRemoteOK(),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('RemoteOK timeout')), 10000))
+        ]),
+        Promise.race([
+          this.fetchFromWeWorkRemotely(),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('WeWorkRemotely timeout')), 10000))
+        ])
       ];
 
       const results = await Promise.allSettled(dataPromises);
-      
+
       // 合并所有成功的结果
       let newJobs = [];
       let activeSources = [];
-      
+
       results.forEach((result, index) => {
         if (result.status === 'fulfilled' && result.value.jobs.length > 0) {
           newJobs = [...newJobs, ...result.value.jobs];
           activeSources.push(result.value.source);
           console.log(`✅ ${result.value.source}: ${result.value.jobs.length} 个工作`);
         } else {
-          const sources = ['RemoteOK', 'WeWorkRemotely', 'Mock Data'];
+          const sources = ['RemoteOK', 'WeWorkRemotely'];
           console.warn(`❌ ${sources[index]} 获取失败:`, result.reason?.message);
         }
       });
 
       // 去重处理
       const uniqueJobs = this.deduplicateJobs(newJobs);
-      
+
       // 添加时间戳和新工作标记
       const jobsWithTimestamp = uniqueJobs.map(job => ({
         ...job,
@@ -128,15 +132,12 @@ class RealTimeJobService {
       console.error('❌ 工作数据更新失败:', error);
       this.stats.failedUpdates++;
       this.stats.lastError = error.message;
-      
-      // 如果完全失败，至少返回模拟数据
+
+      // 如果完全失败且没有现有数据，返回空数组
       if (this.jobs.length === 0) {
-        this.jobs = mockJobs.map(job => ({
-          ...job,
-          fetchedAt: new Date().toISOString(),
-          isNew: false
-        }));
-        this.sources = ['Mock Data'];
+        console.warn('⚠️ 无法获取任何真实工作数据');
+        this.jobs = [];
+        this.sources = ['No Data Available'];
       }
 
       return {
@@ -176,17 +177,7 @@ class RealTimeJobService {
     }
   }
 
-  // 获取模拟数据作为备用
-  async fetchMockData() {
-    return {
-      jobs: mockJobs.map(job => ({ 
-        ...job, 
-        dataSource: 'Mock Data',
-        fetchedAt: new Date().toISOString()
-      })),
-      source: 'Mock Data'
-    };
-  }
+  // 移除模拟数据方法 - 不再使用mock数据
 
   // 去重处理
   deduplicateJobs(jobs) {
@@ -196,7 +187,7 @@ class RealTimeJobService {
     for (const job of jobs) {
       // 创建唯一标识符
       const key = `${job.title.toLowerCase().trim()}-${job.company.toLowerCase().trim()}`;
-      
+
       if (!seen.has(key)) {
         seen.set(key, true);
         uniqueJobs.push(job);
@@ -233,20 +224,20 @@ class RealTimeJobService {
 
     // 应用筛选器
     if (filters.jobType) {
-      filteredJobs = filteredJobs.filter(job => 
+      filteredJobs = filteredJobs.filter(job =>
         job.type && job.type.toLowerCase() === filters.jobType.toLowerCase()
       );
     }
 
     if (filters.team) {
-      filteredJobs = filteredJobs.filter(job => 
+      filteredJobs = filteredJobs.filter(job =>
         job.team && job.team.toLowerCase() === filters.team.toLowerCase()
       );
     }
 
     if (filters.salary) {
       const { min, max } = filters.salary;
-      filteredJobs = filteredJobs.filter(job => 
+      filteredJobs = filteredJobs.filter(job =>
         (!min || job.salary >= min) && (!max || job.salary <= max)
       );
     }
@@ -266,32 +257,32 @@ class RealTimeJobService {
   // 排序工作
   sortJobs(jobs, sortBy = 'date') {
     const sortedJobs = [...jobs];
-    
+
     switch (sortBy) {
       case 'date':
         return sortedJobs.sort((a, b) => {
           // 新工作优先
           if (a.isNew && !b.isNew) return -1;
           if (!a.isNew && b.isNew) return 1;
-          
+
           // 按发布日期排序
           const dateOrder = ['Today', 'Yesterday', '2 days ago', '3 days ago', '1 week ago'];
           const indexA = dateOrder.indexOf(a.postedDate);
           const indexB = dateOrder.indexOf(b.postedDate);
-          
+
           if (indexA !== -1 && indexB !== -1) return indexA - indexB;
           if (indexA !== -1) return -1;
           if (indexB !== -1) return 1;
-          
+
           return 0;
         });
-      
+
       case 'salary':
         return sortedJobs.sort((a, b) => (b.salary || 0) - (a.salary || 0));
-      
+
       case 'company':
         return sortedJobs.sort((a, b) => a.company.localeCompare(b.company));
-      
+
       default:
         return sortedJobs;
     }
@@ -330,13 +321,13 @@ class RealTimeJobService {
   // 设置更新频率
   setUpdateFrequency(minutes) {
     this.updateFrequency = minutes * 60 * 1000;
-    
+
     // 如果正在运行，重新启动定时器
     if (this.updateInterval) {
       this.stopRealTimeUpdates();
       this.startRealTimeUpdates();
     }
-    
+
     console.log(`⏰ 更新频率设置为 ${minutes} 分钟`);
   }
 

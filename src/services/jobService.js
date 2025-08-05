@@ -9,9 +9,15 @@ import {
 // 导入RemoteOK API服务
 import { fetchRemoteOKJobs } from './realJobAPI';
 
+// 导入Jobspresso服务
+import JobspressoService from './jobspressoService';
+
 // 导入新的数据加载器和去重服务
 import DataLoader from './DataLoader';
 import DeduplicationService from './DeduplicationService';
+
+// 导入生产环境配置
+import { config } from '../config/production';
 
 // 创建API适配器实例
 const linkedInAdapter = new LinkedInApiAdapter({
@@ -23,16 +29,25 @@ const wwrAdapter = new WWRApiAdapter({
   apiKey: process.env.REACT_APP_RSS2JSON_API_KEY
 });
 
+// 创建Jobspresso服务实例
+const jobspressoService = new JobspressoService();
+
 // 创建缓存服务实例
 const cacheService = new CacheService({
-  memoryTTL: 5 * 60 * 1000, // 5分钟
-  storageTTL: 60 * 60 * 1000 // 1小时
+  memoryTTL: config.cache.memoryTTL,
+  storageTTL: config.cache.storageTTL
 });
 
 // 创建数据加载器实例
 const dataLoader = new DataLoader({
   LinkedIn: linkedInAdapter,
   WeWorkRemotely: wwrAdapter,
+  Jobspresso: {
+    searchJobs: async (searchTerm, filters, page) => {
+      const result = await jobspressoService.fetchJobs(searchTerm, filters.category, page);
+      return { jobs: result.jobs, total: result.total, page, pageSize: result.jobs.length };
+    }
+  },
   RemoteOK: { 
     searchJobs: async (searchTerm, filters, page) => {
       const jobs = await fetchRemoteOKJobs();
@@ -100,6 +115,34 @@ export const fetchLinkedInJobs = async (searchTerm = '', location = 'remote') =>
   }
 };
 
+// Jobspresso Jobs API 集成
+export const fetchJobspressoJobs = async (searchTerm = '', category = '') => {
+  try {
+    // 生成缓存键
+    const cacheKey = CacheService.generateKey('jobspresso_jobs', { searchTerm, category });
+    
+    // 检查缓存
+    const cachedData = await cacheService.get(cacheKey);
+    if (cachedData) {
+      console.log('Using cached Jobspresso jobs');
+      return cachedData;
+    }
+    
+    // 调用API
+    console.log('Fetching Jobspresso jobs with search term:', searchTerm, 'and category:', category);
+    const result = await jobspressoService.fetchJobs(searchTerm, category);
+    
+    // 缓存结果
+    await cacheService.set(cacheKey, result.jobs);
+    
+    return result.jobs;
+  } catch (error) {
+    console.error('Error fetching Jobspresso jobs:', error);
+    // 返回空数组
+    return [];
+  }
+};
+
 // 通用的远程工作搜索函数 - 使用新的DataLoader确保无重复
 export const searchRemoteJobs = async (searchTerm = '', filters = {}, page = 0, pageSize = 50) => {
   try {
@@ -158,10 +201,11 @@ const searchRemoteJobsFallback = async (searchTerm = '', filters = {}) => {
   try {
     console.log('使用备选搜索方法...');
     
-    // 并行调用多个API
-    const [weWorkJobs, linkedInJobs, remoteOKJobs] = await Promise.allSettled([
+    // 并行调用多个API，包括Jobspresso
+    const [weWorkJobs, linkedInJobs, jobspressoJobs, remoteOKJobs] = await Promise.allSettled([
       fetchWeWorkRemotelyJobs(searchTerm, filters.category),
       fetchLinkedInJobs(searchTerm, filters.location || 'remote'),
+      fetchJobspressoJobs(searchTerm, filters.category),
       fetchRemoteOKJobs()
     ]);
     
@@ -169,6 +213,7 @@ const searchRemoteJobsFallback = async (searchTerm = '', filters = {}) => {
     const allJobs = [
       ...(weWorkJobs.status === 'fulfilled' ? weWorkJobs.value : []),
       ...(linkedInJobs.status === 'fulfilled' ? linkedInJobs.value : []),
+      ...(jobspressoJobs.status === 'fulfilled' ? jobspressoJobs.value : []),
       ...(remoteOKJobs.status === 'fulfilled' ? remoteOKJobs.value : [])
     ];
     
