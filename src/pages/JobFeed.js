@@ -2,10 +2,11 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Header from '../components/Header';
 import JobCard from '../components/JobCard';
 import JobDetailsDrawer from '../components/JobDetailsDrawer';
-// 移除mock数据依赖
+// 移除mock数据依赖，添加实时刷新服务
 import jobService from '../services/jobService';
 import fallbackJobService from '../services/fallbackJobService';
 import realTimeJobService from '../services/RealTimeJobService';
+import refreshService from '../services/RefreshService';
 import './JobFeed.css';
 
 const JobFeed = () => {
@@ -25,6 +26,7 @@ const JobFeed = () => {
   const [lastUpdate, setLastUpdate] = useState(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [realTimeStats, setRealTimeStats] = useState(null);
+  const [refreshStats, setRefreshStats] = useState(null);
   const observer = useRef();
   const lastJobElementRef = useCallback(node => {
     if (loading || loadingMore) return;
@@ -246,15 +248,15 @@ const JobFeed = () => {
     return jobs; // 返回所有工作
   };
 
-  // 实时数据更新监听器
+  // 实时数据更新监听器 - 集成RefreshService确保每次都获取最新数据
   useEffect(() => {
-    console.log('🚀 初始化实时工作数据服务');
+    console.log('🚀 初始化实时工作数据服务和刷新服务');
     
     // 启动实时数据服务
     realTimeJobService.startRealTimeUpdates();
     
     // 添加数据更新监听器
-    const unsubscribe = realTimeJobService.addUpdateListener((data) => {
+    const unsubscribeRealTime = realTimeJobService.addUpdateListener((data) => {
       console.log('📡 收到实时数据更新:', data);
       
       // 更新工作数据
@@ -270,26 +272,64 @@ const JobFeed = () => {
       // 重新应用当前的搜索和筛选
       applyFiltersToJobs(activeFilters, data.jobs, searchTerm);
     });
+
+    // 添加刷新服务监听器
+    const unsubscribeRefresh = refreshService.addRefreshListener((data) => {
+      console.log('🔄 收到刷新服务更新:', data);
+      
+      // 更新工作数据
+      setJobs(data.jobs);
+      setDataSources(data.sources);
+      setLastUpdate(data.timestamp);
+      
+      // 生成动态分类
+      const categories = generateDynamicCategories(data.jobs);
+      setDynamicCategories(categories);
+      
+      // 重新应用当前的搜索和筛选
+      applyFiltersToJobs(activeFilters, data.jobs, searchTerm);
+    });
     
-    // 获取初始数据
+    // 获取初始数据 - 优先使用刷新服务强制获取最新数据
     const initializeData = async () => {
       setLoading(true);
       try {
-        const currentData = realTimeJobService.getCurrentJobs();
-        if (currentData.jobs.length > 0) {
-          console.log('✅ 使用现有数据:', currentData.jobs.length, '个工作');
-          setJobs(currentData.jobs);
-          setDataSources(currentData.sources);
-          setLastUpdate(currentData.lastUpdate);
-          setRealTimeStats(currentData.stats);
+        console.log('🔄 页面加载，强制刷新获取最新数据...');
+        
+        // 使用刷新服务强制获取最新数据
+        const refreshResult = await refreshService.autoRefreshOnPageLoad(searchTerm, { 
+          category: activeFilters.length > 0 ? activeFilters[0] : '' 
+        });
+        
+        if (refreshResult.success && refreshResult.jobs.length > 0) {
+          console.log('✅ 刷新服务获取数据成功:', refreshResult.jobs.length, '个工作');
+          setJobs(refreshResult.jobs);
+          setDataSources(refreshResult.sources);
+          setLastUpdate(new Date());
           
-          const categories = generateDynamicCategories(currentData.jobs);
+          const categories = generateDynamicCategories(refreshResult.jobs);
           setDynamicCategories(categories);
           
-          applyFiltersToJobs(activeFilters, currentData.jobs, searchTerm);
+          applyFiltersToJobs(activeFilters, refreshResult.jobs, searchTerm);
         } else {
-          console.log('🔄 触发首次数据更新');
-          await realTimeJobService.forceUpdate();
+          // 如果刷新服务失败，尝试使用实时服务
+          console.log('⚠️ 刷新服务失败，尝试实时服务...');
+          const currentData = realTimeJobService.getCurrentJobs();
+          if (currentData.jobs.length > 0) {
+            console.log('✅ 使用实时服务现有数据:', currentData.jobs.length, '个工作');
+            setJobs(currentData.jobs);
+            setDataSources(currentData.sources);
+            setLastUpdate(currentData.lastUpdate);
+            setRealTimeStats(currentData.stats);
+            
+            const categories = generateDynamicCategories(currentData.jobs);
+            setDynamicCategories(categories);
+            
+            applyFiltersToJobs(activeFilters, currentData.jobs, searchTerm);
+          } else {
+            console.log('🔄 触发实时服务首次数据更新');
+            await realTimeJobService.forceUpdate();
+          }
         }
       } catch (error) {
         console.error('❌ 初始化数据失败:', error);
@@ -307,8 +347,9 @@ const JobFeed = () => {
     
     // 清理函数
     return () => {
-      console.log('🛑 清理实时数据服务');
-      unsubscribe();
+      console.log('🛑 清理实时数据服务和刷新服务');
+      unsubscribeRealTime();
+      unsubscribeRefresh();
       realTimeJobService.stopRealTimeUpdates();
     };
   }, []); // 只在组件挂载时运行一次
@@ -340,7 +381,7 @@ const JobFeed = () => {
     applyFiltersToJobs(filterIds);
   };
 
-  // 手动刷新数据
+  // 手动刷新数据 - 使用RefreshService确保获取最新数据
   const handleRefresh = async () => {
     if (isRefreshing) return;
     
@@ -348,12 +389,25 @@ const JobFeed = () => {
     setIsRefreshing(true);
     
     try {
-      const result = await realTimeJobService.forceUpdate();
-      if (result.success) {
-        console.log('✅ 手动刷新成功');
+      // 优先使用RefreshService强制刷新所有数据源
+      const refreshResult = await refreshService.forceRefreshAllSources(searchTerm, {
+        category: activeFilters.length > 0 ? activeFilters[0] : ''
+      });
+      
+      if (refreshResult.success) {
+        console.log('✅ RefreshService刷新成功:', refreshResult.jobs.length, '个工作');
+        setRefreshStats(refreshResult);
         // 数据会通过监听器自动更新UI
       } else {
-        console.error('❌ 手动刷新失败:', result.error);
+        console.warn('⚠️ RefreshService刷新失败，尝试RealTimeJobService...');
+        
+        // 如果RefreshService失败，回退到RealTimeJobService
+        const result = await realTimeJobService.forceUpdate();
+        if (result.success) {
+          console.log('✅ RealTimeJobService刷新成功');
+        } else {
+          console.error('❌ 所有刷新方法都失败:', result.error);
+        }
       }
     } catch (error) {
       console.error('❌ 手动刷新异常:', error);
@@ -684,7 +738,10 @@ const JobFeed = () => {
       <Header 
         onSearch={(term) => handleSearch(term)} 
         onFilter={handleFilter}
+        onRefresh={handleRefresh}
         dynamicCategories={dynamicCategories}
+        isRefreshing={isRefreshing}
+        lastUpdate={lastUpdate}
       />
       
       <div className="job-list-container">

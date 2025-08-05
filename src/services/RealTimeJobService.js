@@ -1,6 +1,7 @@
-// 实时工作数据刷新服务
-import { fetchRealRemoteJobs, fetchRemoteOKJobs, fetchWeWorkRemotelyJobs } from './realJobAPI';
-import { mockJobs } from './mockData';
+// 实时工作数据刷新服务 - 只使用真实数据源
+import { fetchRemoteOKJobs } from './realJobAPI';
+import { fetchWeWorkRemotelyJobs, fetchJobspressoJobs } from './jobService';
+import { config } from '../config/production';
 
 class RealTimeJobService {
   constructor() {
@@ -9,7 +10,7 @@ class RealTimeJobService {
     this.updateInterval = null;
     this.listeners = new Set();
     this.isUpdating = false;
-    this.updateFrequency = 5 * 60 * 1000; // 5分钟更新一次
+    this.updateFrequency = config.realTimeUpdates.interval; // 使用配置的更新频率
     this.sources = [];
     this.stats = {
       totalUpdates: 0,
@@ -17,6 +18,7 @@ class RealTimeJobService {
       failedUpdates: 0,
       lastError: null
     };
+    this.forceRefreshOnPageLoad = true; // 页面加载时强制刷新
   }
 
   // 开始实时更新
@@ -52,7 +54,7 @@ class RealTimeJobService {
     return await this.updateJobs(true);
   }
 
-  // 更新工作数据
+  // 更新工作数据 - 每次都强制获取最新数据
   async updateJobs(force = false) {
     if (this.isUpdating && !force) {
       console.log('⏳ 更新正在进行中，跳过此次更新');
@@ -63,13 +65,13 @@ class RealTimeJobService {
     this.stats.totalUpdates++;
     
     try {
-      console.log('🔄 开始获取最新工作数据...');
+      console.log('🔄 开始获取最新真实工作数据...');
       
-      // 并行调用多个数据源
+      // 并行调用所有真实数据源，包括Jobspresso
       const dataPromises = [
+        this.fetchFromJobspresso(),
         this.fetchFromRemoteOK(),
-        this.fetchFromWeWorkRemotely(),
-        this.fetchMockData()
+        this.fetchFromWeWorkRemotely()
       ];
 
       const results = await Promise.allSettled(dataPromises);
@@ -84,10 +86,24 @@ class RealTimeJobService {
           activeSources.push(result.value.source);
           console.log(`✅ ${result.value.source}: ${result.value.jobs.length} 个工作`);
         } else {
-          const sources = ['RemoteOK', 'WeWorkRemotely', 'Mock Data'];
+          const sources = ['Jobspresso', 'RemoteOK', 'WeWorkRemotely'];
           console.warn(`❌ ${sources[index]} 获取失败:`, result.reason?.message);
         }
       });
+
+      // 如果所有数据源都失败，记录错误但不使用mock数据
+      if (newJobs.length === 0) {
+        console.warn('⚠️ 所有真实数据源都无法获取数据');
+        this.stats.failedUpdates++;
+        this.stats.lastError = '所有数据源暂时不可用';
+        
+        return {
+          success: false,
+          error: '暂时无法获取工作数据，请稍后重试',
+          jobs: [],
+          sources: ['No Data Available']
+        };
+      }
 
       // 去重处理
       const uniqueJobs = this.deduplicateJobs(newJobs);
@@ -96,7 +112,8 @@ class RealTimeJobService {
       const jobsWithTimestamp = uniqueJobs.map(job => ({
         ...job,
         fetchedAt: new Date().toISOString(),
-        isNew: this.isNewJob(job)
+        isNew: this.isNewJob(job),
+        isRealTime: true // 标记为实时数据
       }));
 
       // 更新内部状态
@@ -106,7 +123,7 @@ class RealTimeJobService {
       this.stats.successfulUpdates++;
       this.stats.lastError = null;
 
-      console.log(`✅ 数据更新完成: ${uniqueJobs.length} 个唯一工作`);
+      console.log(`✅ 实时数据更新完成: ${uniqueJobs.length} 个唯一工作`);
       console.log(`📊 数据源: ${activeSources.join(', ')}`);
 
       // 通知所有监听器
@@ -125,24 +142,14 @@ class RealTimeJobService {
       };
 
     } catch (error) {
-      console.error('❌ 工作数据更新失败:', error);
+      console.error('❌ 实时工作数据更新失败:', error);
       this.stats.failedUpdates++;
       this.stats.lastError = error.message;
       
-      // 如果完全失败，至少返回模拟数据
-      if (this.jobs.length === 0) {
-        this.jobs = mockJobs.map(job => ({
-          ...job,
-          fetchedAt: new Date().toISOString(),
-          isNew: false
-        }));
-        this.sources = ['Mock Data'];
-      }
-
       return {
         success: false,
         error: error.message,
-        jobs: this.jobs,
+        jobs: this.jobs, // 保持之前的数据
         sources: this.sources
       };
     } finally {
@@ -176,16 +183,17 @@ class RealTimeJobService {
     }
   }
 
-  // 获取模拟数据作为备用
-  async fetchMockData() {
-    return {
-      jobs: mockJobs.map(job => ({ 
-        ...job, 
-        dataSource: 'Mock Data',
-        fetchedAt: new Date().toISOString()
-      })),
-      source: 'Mock Data'
-    };
+  // 从Jobspresso获取数据
+  async fetchFromJobspresso() {
+    try {
+      const jobs = await fetchJobspressoJobs();
+      return {
+        jobs: jobs.map(job => ({ ...job, dataSource: 'Jobspresso' })),
+        source: 'Jobspresso'
+      };
+    } catch (error) {
+      throw new Error(`Jobspresso API 失败: ${error.message}`);
+    }
   }
 
   // 去重处理
