@@ -32,7 +32,7 @@
 .search-input {
   width: 100%;
   padding: var(--spacing-3) var(--spacing-4);
-  padding-right: calc(var(--spacing-10) + var(--spacing-6)); /* 为搜索按钮和刷新按钮留出空间 */
+  padding-right: var(--spacing-10); /* 只为搜索按钮留出空间 */
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius-md);
   font-size: var(--font-size-base);
@@ -48,7 +48,7 @@
 
 .search-button {
   position: absolute;
-  right: calc(var(--spacing-3) + var(--spacing-6)); /* 为刷新按钮留出空间 */
+  right: var(--spacing-3);
   top: 50%;
   transform: translateY(-50%);
   background: none;
@@ -63,46 +63,6 @@
 
 .search-button:hover {
   color: var(--primary-color);
-}
-
-/* 小刷新icon按钮样式 */
-.refresh-icon-button {
-  position: absolute;
-  right: var(--spacing-3);
-  top: 50%;
-  transform: translateY(-50%);
-  background: none;
-  border: none;
-  color: var(--text-secondary);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--spacing-1);
-  transition: all var(--transition-fast);
-}
-
-.refresh-icon-button:hover:not(:disabled) {
-  color: var(--primary-color);
-}
-
-.refresh-icon-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-/* 刷新时的旋转动画 - 只旋转图形，保持图形不变 */
-.refresh-icon-button svg.spinning {
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
 }
 
 .filter-tags {

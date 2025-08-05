@@ -738,9 +738,7 @@ const JobFeed = () => {
       <Header 
         onSearch={(term) => handleSearch(term)} 
         onFilter={handleFilter}
-        onRefresh={handleRefresh}
         dynamicCategories={dynamicCategories}
-        isRefreshing={isRefreshing}
       />
       
       <div className="job-list-container">

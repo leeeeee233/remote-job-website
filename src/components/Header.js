@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import './Header.css';
 
-const Header = ({ onSearch, onFilter, onRefresh, dynamicCategories = [], isRefreshing = false }) => {
+const Header = ({ onSearch, onFilter, dynamicCategories = [] }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFilters, setActiveFilters] = useState([]);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
@@ -55,12 +55,7 @@ const Header = ({ onSearch, onFilter, onRefresh, dynamicCategories = [], isRefre
     }
   };
 
-  // 处理刷新按钮点击
-  const handleRefresh = () => {
-    if (onRefresh && !isRefreshing) {
-      onRefresh();
-    }
-  };
+
   
   return (
     <header className="header">
@@ -80,30 +75,6 @@ const Header = ({ onSearch, onFilter, onRefresh, dynamicCategories = [], isRefre
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="11" cy="11" r="8"></circle>
                 <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-              </svg>
-            </button>
-            {/* 小刷新icon */}
-            <button 
-              className="refresh-icon-button"
-              onClick={handleRefresh}
-              disabled={isRefreshing}
-              title="刷新获取最新工作信息"
-            >
-              <svg 
-                xmlns="http://www.w3.org/2000/svg" 
-                width="16" 
-                height="16" 
-                viewBox="0 0 24 24" 
-                fill="none" 
-                stroke="currentColor" 
-                strokeWidth="2" 
-                strokeLinecap="round" 
-                strokeLinejoin="round"
-                className={isRefreshing ? 'spinning' : ''}
-              >
-                <polyline points="23 4 23 10 17 10"></polyline>
-                <polyline points="1 20 1 14 7 14"></polyline>
-                <path d="m3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
               </svg>
             </button>
           </div>
