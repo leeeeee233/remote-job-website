@@ -291,17 +291,9 @@
   background-color: var(--secondary-color);
 }
 
-.refresh-button svg.spinning {
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+/* 刷新符号在刷新过程中保持同样的样式，不添加旋转动画 */
+.refresh-button svg {
+  /* 保持图标样式一致，无论是否在刷新状态 */
 }
 
 .last-update {

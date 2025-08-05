@@ -142,7 +142,6 @@ const Header = ({ onSearch, onFilter, onRefresh, dynamicCategories = [], isRefre
               strokeWidth="2" 
               strokeLinecap="round" 
               strokeLinejoin="round"
-              className={isRefreshing ? 'spinning' : ''}
             >
               <polyline points="23 4 23 10 17 10"></polyline>
               <polyline points="1 20 1 14 7 14"></polyline>
