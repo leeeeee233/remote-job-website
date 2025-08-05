@@ -741,7 +741,6 @@ const JobFeed = () => {
         onRefresh={handleRefresh}
         dynamicCategories={dynamicCategories}
         isRefreshing={isRefreshing}
-        lastUpdate={lastUpdate}
       />
       
       <div className="job-list-container">

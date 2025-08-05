@@ -11,32 +11,7 @@
   gap: var(--spacing-4);
 }
 
-/* Huntjob品牌标识样式 */
-.brand-logo {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  margin-bottom: var(--spacing-2);
-}
-
-.brand-name {
-  font-size: 2rem;
-  font-weight: 700;
-  color: var(--primary-color);
-  margin: 0;
-  letter-spacing: -0.02em;
-  background: linear-gradient(135deg, var(--primary-color), #4f46e5);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.brand-tagline {
-  font-size: var(--font-size-sm);
-  color: var(--text-secondary);
-  margin-top: 0.25rem;
-  font-weight: var(--font-weight-medium);
-}
+/* 移除品牌标识样式 */
 
 .search-container {
   width: 100%;
@@ -57,7 +32,7 @@
 .search-input {
   width: 100%;
   padding: var(--spacing-3) var(--spacing-4);
-  padding-right: var(--spacing-10);
+  padding-right: calc(var(--spacing-10) + var(--spacing-6)); /* 为搜索按钮和刷新按钮留出空间 */
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius-md);
   font-size: var(--font-size-base);
@@ -73,7 +48,7 @@
 
 .search-button {
   position: absolute;
-  right: var(--spacing-3);
+  right: calc(var(--spacing-3) + var(--spacing-6)); /* 为刷新按钮留出空间 */
   top: 50%;
   transform: translateY(-50%);
   background: none;
@@ -88,6 +63,46 @@
 
 .search-button:hover {
   color: var(--primary-color);
+}
+
+/* 小刷新icon按钮样式 */
+.refresh-icon-button {
+  position: absolute;
+  right: var(--spacing-3);
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-1);
+  transition: all var(--transition-fast);
+}
+
+.refresh-icon-button:hover:not(:disabled) {
+  color: var(--primary-color);
+}
+
+.refresh-icon-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* 刷新时的旋转动画 - 只旋转图形，保持图形不变 */
+.refresh-icon-button svg.spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .filter-tags {
@@ -199,13 +214,7 @@
     padding: var(--spacing-4);
   }
   
-  .brand-name {
-    font-size: 1.5rem;
-  }
-  
-  .brand-tagline {
-    font-size: var(--font-size-xs);
-  }
+
   
   .filter-tags {
     overflow-x: auto;
@@ -239,65 +248,4 @@
     max-width: 200px;
   }
 
-  .refresh-controls {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: var(--spacing-2);
-  }
-
-  .refresh-button {
-    width: 100%;
-    justify-content: center;
-  }
-}
-
-/* 刷新控制区域样式 */
-.refresh-controls {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-3);
-  margin-top: var(--spacing-4);
-  padding-top: var(--spacing-3);
-  border-top: 1px solid var(--border-color);
-}
-
-.refresh-button {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-2);
-  padding: var(--spacing-2) var(--spacing-4);
-  background-color: var(--primary-color);
-  color: white;
-  border: none;
-  border-radius: var(--border-radius-md);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-}
-
-.refresh-button:hover:not(:disabled) {
-  background-color: var(--primary-hover);
-  transform: translateY(-1px);
-}
-
-.refresh-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: none;
-}
-
-.refresh-button.refreshing {
-  background-color: var(--secondary-color);
-}
-
-/* 刷新符号在刷新过程中保持同样的样式，不添加旋转动画 */
-.refresh-button svg {
-  /* 保持图标样式一致，无论是否在刷新状态 */
-}
-
-.last-update {
-  font-size: var(--font-size-xs);
-  color: var(--text-secondary);
-  font-style: italic;
 }
